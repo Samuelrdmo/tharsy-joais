@@ -41,6 +41,11 @@ export async function isAdmin(): Promise<boolean> {
   if (!supabase) return sessionStorage.getItem('tharsy-demo-admin') === 'true';
   const { data, error } = await supabase.rpc('is_admin'); if (error) throw new Error('Não foi possível verificar sua autorização.'); return data === true;
 }
+/** Há uma sessão salva neste navegador? Lê só o armazenamento local, sem chamar o servidor. */
+export async function hasSession(): Promise<boolean> {
+  if (!supabase) return sessionStorage.getItem('tharsy-demo-admin') === 'true';
+  const { data } = await supabase.auth.getSession(); return !!data.session;
+}
 export async function login(username: string, password: string) {
   if (!supabase) throw new Error('O Supabase ainda não foi conectado. Use o painel demonstrativo.');
   const email = resolveAdminIdentity(username);

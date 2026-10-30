@@ -1,6 +1,6 @@
 # Identidade digital — Tharsy
 
-**THARSY** em destaque, **SEMI JOIAS | ACESSÓRIOS** na assinatura. Direção editorial com fundo marfim, tipografia serifada, fotos amplas e dourado nos detalhes. A fotografia da fachada e o raster pequeno são referências de identidade, não arquivos de logo.
+**THARSY** em destaque, **SEMIJOIAS & ACESSÓRIOS** na assinatura. Direção editorial com fundo marfim, tipografia serifada, fotos amplas e dourado nos detalhes. A logo oficial vetorizada fica em `public/brand/` (horizontal, vertical, ícone e texto).
 
 ## Cores
 
@@ -8,15 +8,18 @@
 |---|---|---|
 | `--ivory` | `#F7F4EB` | Fundo principal |
 | `--surface` | `#FFFEFA` | Formulários, painéis e superfícies |
-| `--ink` | `#19191D` | Textos, ícones e botões principais |
+| `--ink` | `#403043` | Berinjela da logo: textos, ícones e botões principais |
+| `--ink-hover` | `#54405A` | Botões principais ao passar o mouse |
 | `--gold` | `#C5A447` | Símbolo, linhas, pequenos detalhes |
 | `--gold-light` | `#E8D9A8` | Seleções e realces de fundo |
 | `--muted` | `#68655E` | Texto secundário |
 | `--border` | `#E5E0D5` | Divisórias e contornos |
 
-As sete cores estão centralizadas em `:root`, em `src/styles.css`. Estados de sucesso e erro têm tokens adicionais, sem substituir a identidade principal.
+As cores estão centralizadas em `:root`, em `src/styles.css`. Estados de sucesso e erro têm tokens adicionais, sem substituir a identidade principal. Sombras e o fundo escurecido das janelas usam o mesmo berinjela com transparência, nunca preto puro.
 
-Texto corrente: preto ou cinza sobre marfim/branco quente. Botões principais: preto com texto claro. Seleções: dourado claro com texto preto. Dourado e dourado claro não são usados em texto informativo pequeno sobre branco. Foco de teclado visível em preto.
+A cor principal da interface é a berinjela da logo (`#403043`); a interface não usa preto. A logo usa ainda o dourado `#D2AE6D`, que fica restrito aos arquivos da marca.
+
+Texto corrente: berinjela ou cinza sobre marfim/branco quente. Botões principais: berinjela com texto claro. Seleções: dourado claro com texto berinjela. Contraste: 11:1 no marfim, 12:1 no botão, 8,7:1 no dourado claro. Dourado e dourado claro não são usados em texto informativo pequeno sobre branco. Foco de teclado visível em berinjela. Preço promocional em `--danger`, com o preço normal riscado em `--muted`.
 
 ## Tipografia
 
@@ -34,9 +37,10 @@ Escala de espaço: 4, 8, 12, 16, 24, 32, 48, 64 e 96 px (`--space-1` a `--space-
 
 ## Componentes compartilhados
 
-- `Brand` e `Mark`: assinatura consistente no cabeçalho, login e rodapé. `brand.logoUrl` prepara a substituição por arquivo oficial sem redesenhar as telas.
+- `Brand`: logo oficial horizontal no cabeçalho e no rodapé (`brand.logoUrl`).
 - `Photo`: mantém proporção, carrega sob demanda e oferece fallback acessível.
-- `CatalogControls`: busca, categorias, ordenação e disponibilidade em vitrine e painel.
+- `CatalogControls`: busca, ordenação e o popup **Filtros** (categoria e disponibilidade) em vitrine e painel. Categorias aparecem só pelo nome, sem ícones.
+- `CategoryManager`: cria e exclui categorias no painel; o formulário de peça também cria categorias.
 - `WhatsAppButton`: compra ou consulta de esgotado com nome, preço e link da peça. Prévia explicada quando o número ainda não existe.
 - `Dialog`: modal nativo com foco contido, Escape, confirmação de exclusão e cancelamento.
 - `ErrorBox`, `Loading` e toast: feedback claro, estados vazios e falhas recuperáveis.
@@ -51,7 +55,7 @@ Escala de espaço: 4, 8, 12, 16, 24, 32, 48, 64 e 96 px (`--space-1` a `--space-
 | 640–999 px | Duas colunas, ferramentas lado a lado | Lista adaptada ao espaço disponível |
 | A partir de 1.000 px | Quatro colunas | Lista horizontal e prévia lateral do formulário |
 
-Botões e ações importantes têm área de toque de pelo menos 48 px. A navegação de categorias pode deslizar horizontalmente dentro do seu próprio contêiner; a página não exige rolagem lateral. O formulário permanece em uma coluna mesmo no desktop, com a prévia separada ao lado.
+Botões e ações importantes têm área de toque de pelo menos 48 px. O popup de filtros cabe na largura da tela; a página não exige rolagem lateral. O formulário permanece em uma coluna mesmo no desktop, com a prévia separada ao lado.
 
 ## Fotografia e conteúdo
 
