@@ -107,3 +107,11 @@ Consulte `VERIFICACAO.md` para os fluxos conferidos no navegador e o que depende
 - Fotos demonstrativas do Unsplash, baixadas e incluídas em `public/images`. IDs e URLs estão em `scripts/download-demo-images.mjs`. Elas ilustram a interface e não representam o estoque da loja; troque pelas fotos reais antes do lançamento comercial.
 
 A publicação inicial no Sites é privada para revisão. A vitrine em si não exige login de comprador; liberar a hospedagem para visitantes externos é uma configuração de audiência separada.
+
+## Deploy na Vercel
+
+O repositório `Samuelrdmo/tharsy-joais` está conectado ao projeto `tharsy-joais` na Vercel. Cada push na branch `main` gera um novo deploy de produção.
+
+- Preset: Vite. Instalação `npm ci`, build `npm run build`, saída `dist` (definidos em `vercel.json`, junto com cabeçalhos de cache e segurança).
+- Variáveis de ambiente (Production e Preview): `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`. Para ativar o botão de compra, adicione `VITE_WHATSAPP_NUMBER` (55 + DDD + número) e faça um novo deploy.
+- Como as rotas usam hash, não é necessária regra de rewrite.
