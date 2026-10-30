@@ -33,6 +33,7 @@ O modo demo não é autenticação de produção. Ele não tenta gravar no Supab
 1. Crie ou use um projeto Supabase da lojista.
 2. No SQL Editor, execute **uma vez** `supabase/migrations/001_catalog.sql`. A migration cria tabelas, índices, funções, políticas RLS e o bucket público `product-photos`.
    Em seguida execute `supabase/migrations/002_promo_price_single_photo.sql` (preço promocional e uma foto por peça). Ela é reexecutável e **deve ser aplicada também no projeto já configurado**.
+   Depois execute `supabase/migrations/003_categories.sql` (categorias cadastráveis no painel). Também é reexecutável e deve ser aplicada no projeto já configurado.
 3. Em Authentication, desative o cadastro público de novos usuários. Este aplicativo não oferece cadastro.
 4. Em Authentication → Users → Add user → Create new user, use o identificador técnico `tharsyadmin@auth.tharsy.invalid`, defina a senha e mantenha a conta confirmada (Auto Confirm User). Esse endereço interno não é uma caixa de e-mail e não envia mensagens: o domínio `.invalid` é reservado. A lojista não precisa de e-mail para usar o sistema. Não envie convite por e-mail e não coloque a senha no código.
 5. Execute `supabase/authorize-admin.sql` no SQL Editor para autorizar **somente essa conta**. O script exige que ela já exista e não altera senhas. É reexecutável sem duplicar a autorização.
@@ -71,11 +72,11 @@ node --experimental-strip-types scripts/generate-seed.mjs
 | Paleta, tipografia, espaços, raios e estilos compartilhados | `src/styles.css` |
 | WhatsApp da loja | `VITE_WHATSAPP_NUMBER` no `.env` |
 | Instagram da loja | `VITE_INSTAGRAM_URL` no `.env` |
-| Categorias | `src/domain.ts` e constraint correspondente na migration |
+| Categorias | Painel da loja (seção **Categorias**) ou no cadastro da peça, em **+ Nova categoria…** |
 | Exemplos de produtos | `src/demo.ts` |
 | Título, descrição e fontes | `index.html` |
 
-O componente `Brand` usa assinatura tipográfica com um pequeno símbolo SVG provisório inspirado na referência. Não utiliza nem amplia a foto da fachada ou a imagem pequena. Para substituí-lo, inclua um SVG oficial em `public/` e defina `brand.logoUrl`. O componente já preserva a proporção.
+A logo oficial foi vetorizada a partir do PNG da marca e fica em `public/brand/`: `tharsy-horizontal.svg` (usada no topo e no rodapé), `tharsy-vertical.svg` (original, ícone sobre o nome), `tharsy-icone.svg` (só o diamante) e `tharsy-texto.svg` (só o nome). O favicon usa o ícone oficial. Para trocar a versão exibida, altere `brand.logoUrl` em `src/config.ts`.
 
 O guia `DESIGN_SYSTEM.md` registra a direção visual e os tokens.
 

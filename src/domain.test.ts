@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parsePrice, filterProducts, whatsAppMessage, validPhone, finalPrice, hasPromo } from './domain.ts';
+import { parsePrice, filterProducts, whatsAppMessage, validPhone, finalPrice, hasPromo, categoryName, sameCategory } from './domain.ts';
 import type { Product } from './domain.ts';
 import { adminAccount, resolveAdminIdentity } from './admin-login.ts';
 
@@ -37,4 +37,9 @@ test('promo price is charged, sorted and sent on WhatsApp; the normal price stay
   assert.equal(finalPrice(promo), 5000); assert.equal(hasPromo(promo), true); assert.equal(hasPromo({ ...a, promo_price_cents: null }), false);
   assert.deepEqual(filterProducts([a, promo], { ...filters, sort: 'price-asc' }).map(p => p.id), ['p','a']);
   assert.match(whatsAppMessage(promo, 'https://tharsy.example'), /50,00/);
+});
+test('category names are trimmed, keep their letters and compare without case', () => {
+  assert.equal(categoryName('  Tornozeleiras  '), 'Tornozeleiras'); assert.equal(categoryName('Kits   de  presente'), 'Kits de presente');
+  assert.equal(categoryName('   '), null); assert.equal(categoryName('x'.repeat(41)), null);
+  assert.equal(sameCategory('Anéis', 'ANÉIS'), true); assert.equal(sameCategory('Anéis', 'Brincos'), false);
 });

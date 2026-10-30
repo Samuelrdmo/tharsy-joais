@@ -1,5 +1,12 @@
-export const CATEGORIES = ['Anéis', 'Brincos', 'Colares', 'Pulseiras', 'Conjuntos'] as const;
-export type Category = typeof CATEGORIES[number];
+/** Categorias iniciais. As reais ficam na tabela categories e são gerenciadas no painel. */
+export const DEFAULT_CATEGORIES = ['Anéis', 'Brincos', 'Colares', 'Pulseiras', 'Conjuntos'];
+export type Category = string;
+/** Normaliza o nome digitado; null quando vazio ou longo demais. */
+export function categoryName(value: string): string | null {
+  const name = value.trim().replace(/\s+/g, ' ');
+  return name.length >= 1 && name.length <= 40 ? name : null;
+}
+export const sameCategory = (a: string, b: string) => a.toLocaleLowerCase('pt-BR') === b.toLocaleLowerCase('pt-BR');
 export type ProductImage = { id: string; url: string; path: string | null; position: number };
 export type Product = {
   id: string; name: string; description: string; price_cents: number; promo_price_cents: number | null; category: Category;

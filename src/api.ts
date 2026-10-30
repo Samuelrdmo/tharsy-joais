@@ -1,12 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { demoMode, supabaseKey, supabaseUrl } from './config';
 import { demoProducts } from './demo';
-import { PAGE_SIZE, filterProducts } from './domain';
+import { DEFAULT_CATEGORIES, PAGE_SIZE, filterProducts, sameCategory } from './domain';
 import type { Product, ProductImage, Filters } from './domain';
 import { blobDataUrl } from './images';
 import { resolveAdminIdentity } from './admin-login';
 export const supabase = demoMode ? null : createClient(supabaseUrl, supabaseKey);
 const DEMO_KEY = 'tharsy-demo-products-v1';
+const DEMO_CATEGORIES_KEY = 'tharsy-demo-categories-v1';
 const select = '*,images:product_images(id,url,path,position)';
 function readDemo(): Product[] {
   const saved = localStorage.getItem(DEMO_KEY);
@@ -109,4 +110,41 @@ export async function deleteProduct(product: Product) {
   if (error) throw new Error('Não foi possível excluir. A peça pode ter sido alterada; atualize a lista e tente novamente.');
   return { cleanupPending: !await cleanupPhotos() };
 }
-export function resetDemo() { localStorage.removeItem(DEMO_KEY); }
+export function resetDemo() { localStorage.removeItem(DEMO_KEY); localStorage.removeItem(DEMO_CATEGORIES_KEY); }
+function readDemoCategories(): string[] {
+  try { const saved = localStorage.getItem(DEMO_CATEGORIES_KEY); return saved ? JSON.parse(saved) : [...DEFAULT_CATEGORIES]; } catch { return [...DEFAULT_CATEGORIES]; }
+}
+function storeDemoCategories(categories: string[]) {
+  try { localStorage.setItem(DEMO_CATEGORIES_KEY, JSON.stringify(categories)); }
+  catch { throw new Error('O armazenamento deste navegador está cheio ou indisponível.'); }
+}
+const inUse = (count: number) => new Error(`Esta categoria tem ${count} ${count === 1 ? 'peça' : 'peças'}. Mude a categoria ${count === 1 ? 'dela' : 'delas'} antes de excluir.`);
+export async function listCategories(): Promise<string[]> {
+  if (!supabase) return readDemoCategories();
+  const { data, error } = await supabase.from('categories').select('name').order('created_at').order('name');
+  if (error) throw new Error('Não foi possível carregar as categorias. Verifique a conexão e tente novamente.');
+  return data.map(c => c.name as string);
+}
+/** Recebe um nome já normalizado (categoryName). */
+export async function createCategory(name: string): Promise<string> {
+  if (!supabase) {
+    const categories = readDemoCategories();
+    if (categories.some(c => sameCategory(c, name))) throw new Error('Essa categoria já existe.');
+    storeDemoCategories([...categories, name]); return name;
+  }
+  const { error } = await supabase.from('categories').insert({ name });
+  if (error) throw new Error(error.code === '23505' ? 'Essa categoria já existe.' : 'Não foi possível criar a categoria. Tente novamente.');
+  return name;
+}
+export async function deleteCategory(name: string) {
+  if (!supabase) {
+    const used = readDemo().filter(p => p.category === name).length; if (used) throw inUse(used);
+    storeDemoCategories(readDemoCategories().filter(c => c !== name)); return;
+  }
+  const { count, error: countError } = await supabase.from('products').select('id', { count: 'exact', head: true }).eq('category', name);
+  if (countError) throw new Error('Não foi possível verificar as peças desta categoria. Tente novamente.');
+  if (count) throw inUse(count);
+  const { error } = await supabase.from('categories').delete().eq('name', name);
+  // 23503: uma peça entrou na categoria entre a contagem e a exclusão.
+  if (error) throw new Error(error.code === '23503' ? 'Esta categoria ainda tem peças. Mude a categoria delas antes de excluir.' : 'Não foi possível excluir a categoria. Tente novamente.');
+}
