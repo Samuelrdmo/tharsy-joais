@@ -19,8 +19,20 @@ function storeDemo(products: Product[]) {
   catch { throw new Error('O armazenamento deste navegador está cheio ou indisponível. Remova algumas fotos e tente novamente. Seu formulário foi preservado.'); }
 }
 const mapProduct = (p: Product): Product => ({ ...p, images: [...p.images].sort((a, b) => a.position - b.position) });
+// Memória curta da vitrine: voltar de uma peça ou de uma página não consulta o banco de novo.
+const CACHE_MS = 5 * 60 * 1000;
+const listCache = new Map<string, { at: number; value: { products: Product[]; count: number } }>();
+const productCache = new Map<string, { at: number; value: Product }>();
+const fresh = (at: number) => Date.now() - at < CACHE_MS;
+function rememberProducts(products: Product[]) { const at = Date.now(); for (const p of products) productCache.set(p.id, { at, value: p }); }
+/** Esquece tudo; usado ao salvar/excluir e ao abrir o painel, que sempre mostra dados atuais. */
+export function clearCatalogCache() { listCache.clear(); productCache.clear(); }
+/** Peça já carregada recentemente (lista ou detalhe), para abrir a página na hora. */
+export function peekProduct(id: string): Product | undefined { const hit = productCache.get(id); return hit && fresh(hit.at) ? hit.value : undefined; }
 export async function listProducts(filters: Filters, page: number, signal?: AbortSignal): Promise<{ products: Product[]; count: number }> {
   if (!supabase) { const all = filterProducts(readDemo(), filters); return { products: all.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), count: all.length }; }
+  const key = JSON.stringify([filters, page]); const hit = listCache.get(key);
+  if (hit && fresh(hit.at)) return hit.value;
   let query = supabase.from('products').select(select, { count: 'exact' });
   if (filters.search) query = query.ilike('name', `%${filters.search.replace(/[%_\\]/g, '\\$&')}%`);
   if (filters.category) query = query.eq('category', filters.category);
@@ -30,12 +42,17 @@ export async function listProducts(filters: Filters, page: number, signal?: Abor
   query = query.order('created_at', { ascending: false }).order('id').range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
   if (signal) query = query.abortSignal(signal);
   const { data, error, count } = await query; if (error) throw new Error('Não foi possível carregar as peças. Verifique a conexão e tente novamente.');
-  return { products: (data as Product[]).map(mapProduct), count: count ?? 0 };
+  const value = { products: (data as Product[]).map(mapProduct), count: count ?? 0 };
+  if (listCache.size > 50) listCache.clear();
+  listCache.set(key, { at: Date.now(), value }); rememberProducts(value.products);
+  return value;
 }
 export async function getProduct(id: string): Promise<Product | null> {
   if (!supabase) return readDemo().find(p => p.id === id) || null;
   const { data, error } = await supabase.from('products').select(select).eq('id', id).maybeSingle();
-  if (error) throw new Error('Não foi possível abrir esta peça. Tente novamente.'); return data ? mapProduct(data as Product) : null;
+  if (error) throw new Error('Não foi possível abrir esta peça. Tente novamente.');
+  if (!data) { productCache.delete(id); return null; }
+  const product = mapProduct(data as Product); rememberProducts([product]); return product;
 }
 export async function isAdmin(): Promise<boolean> {
   if (!supabase) return sessionStorage.getItem('tharsy-demo-admin') === 'true';
@@ -71,6 +88,7 @@ export async function cleanupPhotos(): Promise<boolean> {
 }
 export type SavePhoto = ProductImage & { blob?: Blob };
 export async function saveProduct(product: Product, photos: SavePhoto[], onProgress: (text: string) => void): Promise<{ cleanupPending: boolean }> {
+  clearCatalogCache();
   if (!supabase) {
     const images = await Promise.all(photos.map(async (p, i) => ({ id: p.id, url: p.blob ? await blobDataUrl(p.blob) : p.url, path: null, position: i })));
     const items = readDemo(); const previous = items.findIndex(p => p.id === product.id);
@@ -89,7 +107,7 @@ export async function saveProduct(product: Product, photos: SavePhoto[], onProgr
         // A fila persistente permite recuperar falhas de rede antes de confirmar o produto.
         const { error: queueError } = await supabase.from('storage_cleanup').insert({ path });
         if (queueError) throw new Error('Não foi possível preparar o envio das fotos.');
-        const { error } = await supabase.storage.from('product-photos').upload(path, photo.blob, { contentType: photo.blob.type, upsert: false });
+        const { error } = await supabase.storage.from('product-photos').upload(path, photo.blob, { contentType: photo.blob.type, upsert: false, cacheControl: '31536000' });
         uploaded.push(path); if (error) throw new Error('Falha ao enviar uma foto. Seus dados continuam no formulário.');
         url = supabase.storage.from('product-photos').getPublicUrl(path).data.publicUrl;
       }
@@ -110,6 +128,7 @@ export async function saveProduct(product: Product, photos: SavePhoto[], onProgr
   }
 }
 export async function deleteProduct(product: Product) {
+  clearCatalogCache();
   if (!supabase) { storeDemo(readDemo().filter(p => p.id !== product.id)); return { cleanupPending: false }; }
   const { error } = await supabase.rpc('delete_product', { p_id: product.id, p_updated_at: product.updated_at });
   if (error) throw new Error('Não foi possível excluir. A peça pode ter sido alterada; atualize a lista e tente novamente.');
