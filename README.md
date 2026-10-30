@@ -43,6 +43,7 @@ O modo demo não é autenticação de produção. Ele não tenta gravar no Supab
 VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=SUA-CHAVE-PUBLICA
 VITE_WHATSAPP_NUMBER=55DDDNUMERO
+VITE_INSTAGRAM_URL=https://instagram.com/SEU-PERFIL
 ```
 
 Use a chave **publishable/anon pública**, nunca a chave `service_role` ou uma chave secreta. O frontend não tem e não precisa de credenciais privilegiadas. Somente a chave pública e a URL são compiladas para o navegador; a autorização é aplicada no banco e no Storage.
@@ -69,6 +70,7 @@ node --experimental-strip-types scripts/generate-seed.mjs
 | Nome, assinatura e caminho da logo oficial | `src/config.ts` |
 | Paleta, tipografia, espaços, raios e estilos compartilhados | `src/styles.css` |
 | WhatsApp da loja | `VITE_WHATSAPP_NUMBER` no `.env` |
+| Instagram da loja | `VITE_INSTAGRAM_URL` no `.env` |
 | Categorias | `src/domain.ts` e constraint correspondente na migration |
 | Exemplos de produtos | `src/demo.ts` |
 | Título, descrição e fontes | `index.html` |
@@ -114,5 +116,5 @@ A publicação inicial no Sites é privada para revisão. A vitrine em si não e
 O repositório `Samuelrdmo/tharsy-joais` está conectado ao projeto `tharsy-joais` na Vercel. Cada push na branch `main` gera um novo deploy de produção.
 
 - Preset: Vite. Instalação `npm ci`, build `npm run build`, saída `dist` (definidos em `vercel.json`, junto com cabeçalhos de cache e segurança).
-- Variáveis de ambiente (Production e Preview): `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`. Para ativar o botão de compra, adicione `VITE_WHATSAPP_NUMBER` (55 + DDD + número) e faça um novo deploy.
+- Variáveis de ambiente (Production e Preview): `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`. Para ativar o botão de compra, adicione `VITE_WHATSAPP_NUMBER` (55 + DDD + número). Para o botão do Instagram no topo, adicione `VITE_INSTAGRAM_URL`. Faça um novo deploy depois de alterar. O painel não tem link na vitrine: acesse por `/#/admin`.
 - Como as rotas usam hash, não é necessária regra de rewrite.
