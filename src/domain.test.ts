@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parsePrice, filterProducts, whatsAppMessage, validPhone } from './domain.ts';
+import { parsePrice, filterProducts, whatsAppMessage, validPhone, finalPrice, hasPromo } from './domain.ts';
 import type { Product } from './domain.ts';
 import { adminAccount, resolveAdminIdentity } from './admin-login.ts';
 
@@ -31,4 +31,10 @@ test('WhatsApp message includes product, BRL price, deep link and availability',
   assert.ok(text.includes('Anel Essência')); assert.match(text, /100,00/); assert.ok(text.includes('https://tharsy.example/#/produto/a'));
   assert.match(whatsAppMessage(b, 'https://tharsy.example'), /consultar a disponibilidade/);
   assert.equal(validPhone(''), false); assert.equal(validPhone('5511999999999'), true); assert.equal(validPhone('0000000'), false);
+});
+test('promo price is charged, sorted and sent on WhatsApp; the normal price stays as reference', () => {
+  const promo = { ...b, id: 'p', price_cents: 30000, promo_price_cents: 5000 } as Product;
+  assert.equal(finalPrice(promo), 5000); assert.equal(hasPromo(promo), true); assert.equal(hasPromo({ ...a, promo_price_cents: null }), false);
+  assert.deepEqual(filterProducts([a, promo], { ...filters, sort: 'price-asc' }).map(p => p.id), ['p','a']);
+  assert.match(whatsAppMessage(promo, 'https://tharsy.example'), /50,00/);
 });

@@ -25,7 +25,7 @@ export async function listProducts(filters: Filters, page: number, signal?: Abor
   if (filters.category) query = query.eq('category', filters.category);
   if (filters.available) query = query.eq('available', true);
   if (filters.sort === 'featured') query = query.order('featured', { ascending: false });
-  if (filters.sort.startsWith('price')) query = query.order('price_cents', { ascending: filters.sort === 'price-asc' });
+  if (filters.sort.startsWith('price')) query = query.order('final_price_cents', { ascending: filters.sort === 'price-asc' });
   query = query.order('created_at', { ascending: false }).order('id').range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
   if (signal) query = query.abortSignal(signal);
   const { data, error, count } = await query; if (error) throw new Error('Não foi possível carregar as peças. Verifique a conexão e tente novamente.');

@@ -17,6 +17,8 @@ await db.exec(`
   grant execute on function auth.uid(), storage.foldername(text) to anon, authenticated;
 `);
 await db.exec(await readFile('supabase/migrations/001_catalog.sql', 'utf8'));
+const promoMigration = await readFile('supabase/migrations/002_promo_price_single_photo.sql', 'utf8');
+await db.exec(promoMigration); await db.exec(promoMigration);
 const seed = await readFile('supabase/seed-demo.sql', 'utf8');
 await db.exec(seed); await db.exec(seed);
 assert.equal((await db.query('select count(*)::int as n from products')).rows[0].n, 12);
@@ -27,7 +29,7 @@ await db.query('insert into auth.users values ($1), ($2)', [admin, stranger]);
 await db.query('insert into admin_users(user_id) values ($1)', [admin]);
 async function role(name, uid = '') { await db.exec('reset role'); await db.query("select set_config('request.jwt.claim.sub', $1, false)", [uid]); await db.exec(`set role ${name}`); }
 async function denied(sql, args = []) { await assert.rejects(() => db.query(sql, args)); }
-const product = { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', name: 'Peça de teste', description: 'Teste de autorização', price_cents: 12990, category: 'Colares', available: true, featured: false, updated_at: '2026-10-30T00:00:00Z', images: [{ id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', url: '/images/necklace.jpg', path: null, position: 0 }] };
+const product = { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', name: 'Peça de teste', description: 'Teste de autorização', price_cents: 12990, promo_price_cents: null, category: 'Colares', available: true, featured: false, updated_at: '2026-10-30T00:00:00Z', images: [{ id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', url: '/images/necklace.jpg', path: null, position: 0 }] };
 await role('anon');
 assert.equal((await db.query('select count(*)::int as n from products')).rows[0].n, 12);
 assert.equal((await db.query('select is_admin() as ok')).rows[0].ok, false);
@@ -49,12 +51,18 @@ let saved = (await db.query('select * from products where id = $1', [product.id]
 assert.equal(saved.price_cents, 12990);
 await denied('select save_product($1::jsonb)', [{ ...product, price_cents: 0, updated_at: saved.updated_at }]);
 assert.equal((await db.query('select price_cents from products where id = $1', [product.id])).rows[0].price_cents, 12990);
-await denied('select save_product($1::jsonb)', [{ ...product, updated_at: saved.updated_at, images: Array(6).fill(product.images[0]) }]);
+await denied('select save_product($1::jsonb)', [{ ...product, updated_at: saved.updated_at, images: Array(2).fill(product.images[0]) }]);
+await denied('select save_product($1::jsonb)', [{ ...product, updated_at: saved.updated_at, images: [] }]);
+await denied('select save_product($1::jsonb)', [{ ...product, updated_at: saved.updated_at, promo_price_cents: 12990 }]);
 await denied('select save_product($1::jsonb)', [{ ...product, updated_at: saved.updated_at, images: [{ ...product.images[0], url: 'javascript:alert(1)' }] }]);
 await denied('select save_product($1::jsonb)', [{ ...product, updated_at: '2000-01-01T00:00:00Z' }]);
 await db.query('select save_product($1::jsonb)', [{ ...product, updated_at: saved.updated_at, name: 'Peça editada' }]);
 assert.equal((await db.query('select name from products where id = $1', [product.id])).rows[0].name, 'Peça editada');
-console.log('PASS admin: criação e edição atômicas, preço, fotos, URL e conflitos validados');
+saved = (await db.query('select * from products where id = $1', [product.id])).rows[0];
+await db.query('select save_product($1::jsonb)', [{ ...product, updated_at: saved.updated_at, promo_price_cents: 9990 }]);
+saved = (await db.query('select * from products where id = $1', [product.id])).rows[0];
+assert.equal(saved.promo_price_cents, 9990); assert.equal(saved.final_price_cents, 9990);
+console.log('PASS admin: criação e edição atômicas, preço, promoção, foto única, URL e conflitos validados');
 const path = `${admin}/${product.id}/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee.webp`;
 await db.query("insert into storage.objects(bucket_id,name) values('product-photos',$1)", [path]);
 saved = (await db.query('select * from products where id = $1', [product.id])).rows[0];

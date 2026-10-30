@@ -14,7 +14,7 @@ export const demoProducts: Product[] = [
   ['Conjunto Essencial', 18900, 'Conjuntos', 'hero', true, false],
 ].map(([name, price, category, photo, available, featured], i) => ({
   id: `00000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`,
-  name, price_cents: price, category, available, featured,
+  name, price_cents: price, promo_price_cents: null, category, available, featured,
   description: 'Uma peça delicada para compor o seu estilo e acompanhar os pequenos e grandes momentos. Combine com seus acessórios favoritos.\n\nProduto fictício: fotos, preço, acabamento e disponibilidade são apenas demonstrativos. Consulte a loja para conhecer as peças reais.',
   created_at: new Date(Date.UTC(2026, 9, 30, 0, 0, 12 - i)).toISOString(), updated_at: '2026-10-30T00:00:00.000Z',
   images: [{ id: `demo-${i}`, url: `/images/${photo}.jpg`, path: null, position: 0 }],

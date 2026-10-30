@@ -32,6 +32,7 @@ O modo demo não é autenticação de produção. Ele não tenta gravar no Supab
 
 1. Crie ou use um projeto Supabase da lojista.
 2. No SQL Editor, execute **uma vez** `supabase/migrations/001_catalog.sql`. A migration cria tabelas, índices, funções, políticas RLS e o bucket público `product-photos`.
+   Em seguida execute `supabase/migrations/002_promo_price_single_photo.sql` (preço promocional e uma foto por peça). Ela é reexecutável e **deve ser aplicada também no projeto já configurado**.
 3. Em Authentication, desative o cadastro público de novos usuários. Este aplicativo não oferece cadastro.
 4. Em Authentication → Users → Add user → Create new user, use o identificador técnico `tharsyadmin@auth.tharsy.invalid`, defina a senha e mantenha a conta confirmada (Auto Confirm User). Esse endereço interno não é uma caixa de e-mail e não envia mensagens: o domínio `.invalid` é reservado. A lojista não precisa de e-mail para usar o sistema. Não envie convite por e-mail e não coloque a senha no código.
 5. Execute `supabase/authorize-admin.sql` no SQL Editor para autorizar **somente essa conta**. O script exige que ela já exista e não altera senhas. É reexecutável sem duplicar a autorização.
